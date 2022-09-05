@@ -2,7 +2,7 @@ import { isValidObjectId,Mongoose,ObjectId } from "mongoose";
 import { userInfo } from "os";
 
 const router = require('express').Router();
-const Task = require ('../model/Task');
+const Task = require ('../model/task');
 const _ = require('lodash');
 const mon = require("mongoose");
 //const Taskdetails = require('../model/Task');
@@ -79,7 +79,7 @@ router.post('/addproject', async(req,res) => {
      
    );
 
-   router.patch('/updateactivity_v2', async(req,res) => {
+   router.patch('/updateactivity_v2', async(req:any,res:any) => {
     try {
     const task = await Task.findOne({projectname: req.body.projectname,
     /*"activities._id": req.body._id*/},{useFindAndModify:false});

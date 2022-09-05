@@ -50,6 +50,6 @@ const taskschema = new mongoose.Schema({
 
 
 module.exports = mongoose.model('Task', taskschema)
-//module.exports = mongoose.model('Taskdetails', taskdetailsschema)
+//module.exports = mongoose.model('activity', taskdetailsschema)
 
 

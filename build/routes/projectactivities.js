@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var router = require('express').Router();
-var Task = require('../model/Task');
+var Task = require('../model/task');
 var _ = require('lodash');
 var mon = require("mongoose");
 //const Taskdetails = require('../model/Task');

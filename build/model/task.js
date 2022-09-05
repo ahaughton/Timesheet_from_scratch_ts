@@ -66,4 +66,4 @@ var taskschema = new mongoose.Schema({
     activities: [taskdetailsschema]
 });
 module.exports = mongoose.model('Task', taskschema);
-//module.exports = mongoose.model('Taskdetails', taskdetailsschema)
+//module.exports = mongoose.model('activity', taskdetailsschema)
