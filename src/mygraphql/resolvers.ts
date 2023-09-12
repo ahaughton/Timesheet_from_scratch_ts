@@ -15,7 +15,25 @@ Query: {
     Tasks: async() => await task.find(),
     Taskbyid: async(_root,{id}) => await task.findById(id),
     Taskbyprojectname: async(_root,{projectname}) => await task.find({projectname}), 
-    
+    GetTaskbyUser: async(_,{},{user}) => 
+      await task.aggregate([
+         {
+        $project:{ "_id": 0,"projectname":1, "projectowner":1, 
+              activities : {$filter:{
+                                      input: "$activities",
+                                      as: "acti",
+                                      cond: {$and:[{$eq:["$$acti.user_name", user.email]},
+                                                   {$ne:["acti", []]}
+                                                  ]
+                                            }
+                                    }
+                                       
+                             }
+        
+                    }
+        }            
+         ,{$match: {"activities" : {$ne:[]}}}
+         ])  
 }, 
 
 Mutation:{
@@ -37,7 +55,7 @@ createTaskandactivityGQ: async(_root,{input}) =>
         console.log(input)
     try{    const newtask = new task({
              projectname:input.projectname,
-             projectowner: input.projectowner,
+             projectowner: input.projectowner, // to change to context
              projectdescription: input.projectdescription,
              activities:[{jobdescription : input.activities.jobdescription,
                          user_name: input.activities.username,
@@ -53,14 +71,14 @@ createTaskandactivityGQ: async(_root,{input}) =>
 console.log(input)
     },
 
-addActivitiesGQ: async(_,{projectid,input}) => {
+addActivitiesGQ: async(_,{projectid,input},{user}) => {
     // const newactivity = new activity({})
 
     //console.log("This is ", input.projectid)
     try{ const newtask = await task.findById(projectid)
         newtask.activities.push({
             jobdescription: input.jobdescription,
-            user_name: input.user_name,
+            user_name: user.email, 
             jobcategory: input.jobcategory,
             timestart: input.timestart, 
             timestop: input.timestop, 
@@ -94,14 +112,14 @@ deleteTaskGQ: async (_,{taskid})=>{
 
     },
 
-updateAcitivityGQ: async(_,{taskid,activityid,input}) =>
+updateAcitivityGQ: async(_,{taskid,activityid,input},{user}) =>
 {
     //https://attacomsian.com/blog/mongoose-subdocuments
     console.log(activityid)
     console.log(taskid)
     try{ const mytask = await task.findById(taskid)
         mytask.activities.id(activityid).jobdescription = input.jobdescription
-        mytask.activities.id(activityid).username = input.username
+        mytask.activities.id(activityid).username = user.email
         mytask.activities.id(activityid).jobcategory = input.jobcategory
         mytask.activities.id(activityid).timestart = input.timestart
         mytask.activities.id(activityid).timestop = input.timestop
@@ -130,13 +148,14 @@ deleteAcitivityGQ: async(_,{taskid,activityid}) =>
 //         };
 //     },
 // },
-     
+
+//https://www.youtube.com/watch?v=htB2uJCf4ws&t=340s     
 Registeruser: async(_,{input}) =>
-{
-  try { const olduser =  await User.findOne({username: input.username})
+{ 
+  try { const olduser =  await User.findOne({email: input.email})
   // Throw error if error does not exist
   if (olduser){
-    throw new ApolloError('This username already exist ' + input.username, 'USER_ALREADY_EXIST')
+    throw new ApolloError('This email already exist ' + input.email, 'USER_ALREADY_EXIST')
   }
   console.log("user not in database", input.password)
   // encript password 
@@ -146,13 +165,13 @@ Registeruser: async(_,{input}) =>
   const newuser = new User({
     firstname:input.firstname,
     lastname:input.lastname,
-    username:input.username,
+    email:input.email,
     password:encriptedpassword
   })
   
   //create jsonwebtoken (JWT)
   const token = jwt.sign(
-    {user_id: newuser._id, email: newuser.username},
+    {user_id: newuser._id, email: newuser.email},
     "MOVE_ME_TO_ENV",
     {
         expiresIn: "2h"
@@ -162,9 +181,48 @@ Registeruser: async(_,{input}) =>
   console.log ("token created ", token)
   // save user in mongodb 
  const doc = await newuser.save()
- return {id: doc.id, ...doc.doc }
+ return {id: doc.id, ...doc._doc }
 }
 catch(err){console.log(err)}
+},
+
+
+async Loginuser(_,{email,password},ctx:any)
+{
+    // Check if user exist 
+    console.log("this is the context" + ctx + email)
+    try { const Loginuser =  await User.findOne({email: email})
+  // Throw error if error does not exist
+   if (Loginuser && await bcript.compare(password, Loginuser.password))
+     {
+        const token = jwt.sign(
+            {user_id: Loginuser._id, 
+            email:Loginuser.email,
+            roles:Loginuser.roles,
+            permissions:Loginuser.permissions},
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "2h"
+            }
+        );
+        console.log (`token form loginuser => ${token}`)
+        Loginuser.token = token; 
+        console.log (Loginuser)
+        ctx.Loginuser = Loginuser
+        console.log("--------------------")
+        console.log(ctx)
+        console.log("--------------------")
+        return {
+            _id:Loginuser._id, 
+            ...Loginuser._doc 
+        }
+     }else 
+     {
+        throw new ApolloError('Incorect password', 'Incorrect_Password')
+     }
+    // Check if the entered password equals encrypted password 
+}catch(err){console.log(err)}
 }
+
 },
 }

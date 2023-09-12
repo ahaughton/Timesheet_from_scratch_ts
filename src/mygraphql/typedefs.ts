@@ -1,4 +1,4 @@
-import {gql} from 'apollo-server-express';
+import {gql} from 'graphql-tag';
 
 const {
     GraphQLDate,
@@ -6,7 +6,7 @@ const {
     GraphQLTime
   } = require("graphql-scalars");
 
-export const typedefs = gql`
+export const typeDefs = gql`
 # type Query {
 #     hello: String
 # }
@@ -18,6 +18,7 @@ type Query{
     Tasks: [task!]
     Taskbyid(id:ID): task
     Taskbyprojectname(projectname:String): [task]
+    GetTaskbyUser:[task]
 
    # Userbyemail(email:string): User
 }
@@ -70,7 +71,7 @@ input activityInputGQ
 {
      
     jobdescription: String
-    user_name: String
+    ##user_name: String
     jobcategory: String 
     timestart: DateTime
     timestop: DateTime

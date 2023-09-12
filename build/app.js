@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -35,37 +35,79 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var apollo_server_express_1 = require("apollo-server-express");
+//import {ApolloServer, gql} from 'apollo-server-express';
+var graphql_middleware_1 = require("graphql-middleware");
+var server_1 = require("@apollo/server");
+var express4_1 = require("@apollo/server/express4");
 var express = require('express');
 var mongoose = require('mongoose');
 var dotenv = require('dotenv');
 var typedefs_1 = require("./mygraphql/typedefs");
 var resolvers_1 = require("./mygraphql/resolvers");
 var usertypedefs_1 = require("./typedefs/usertypedefs");
+var body_parser_1 = require("body-parser");
+var permission_1 = require("./permission");
+var http_1 = __importDefault(require("http"));
+var cors_1 = __importDefault(require("cors"));
+var drainHttpServer_1 = require("@apollo/server/plugin/drainHttpServer");
+var schema_1 = require("@graphql-tools/schema");
+var jwt = require('jsonwebtoken');
 //const app = express();
 dotenv.config();
 var projectRoute = require('./routes/projectactivities');
+var timesheetschema = (0, schema_1.makeExecutableSchema)({ typeDefs: [typedefs_1.typeDefs, usertypedefs_1.usertypedefs], resolvers: resolvers_1.resolvers });
 mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true }, { useFindAndModify: false }, function () { return console.log(' connected to db!'); });
+//const schemawithpermissions = applyMiddleware(schema, permission)
 function startServer() {
     return __awaiter(this, void 0, void 0, function () {
-        var app, apolloServer;
+        var app, httpServer, apolloServer;
+        var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     app = express();
-                    apolloServer = new apollo_server_express_1.ApolloServer({
-                        typeDefs: [typedefs_1.typedefs, usertypedefs_1.usertypedefs],
-                        resolvers: resolvers_1.resolvers,
+                    httpServer = http_1.default.createServer(app);
+                    apolloServer = new server_1.ApolloServer({
+                        //typeDefs: [typeDefs,usertypedefs],        
+                        //resolvers: resolvers,
+                        schema: (0, graphql_middleware_1.applyMiddleware)(timesheetschema, permission_1.permission),
+                        plugins: [(0, drainHttpServer_1.ApolloServerPluginDrainHttpServer)({ httpServer: httpServer })],
                     });
-                    return [4 /*yield*/, apolloServer.start()];
+                    return [4 /*yield*/, apolloServer.start()
+                        //   apolloServer.applyMiddleware({app, path:'/graphql' }); 
+                    ];
                 case 1:
                     _a.sent();
-                    apolloServer.applyMiddleware({ app: app, path: '/graphql' });
-                    app.use(express.json());
+                    //   apolloServer.applyMiddleware({app, path:'/graphql' }); 
+                    app.use('/graphql', (0, cors_1.default)(), (0, body_parser_1.json)(), (0, express4_1.expressMiddleware)(apolloServer, {
+                        context: function (_a) {
+                            var req = _a.req;
+                            return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_b) {
+                                return [2 /*return*/, ({ user: (0, permission_1.getdatafromtoken)(req), token: req.headers.token /*, log: console.log (req.headers.token)*/ })];
+                            }); });
+                        },
+                    }));
                     app.use('/', projectRoute);
-                    app.use(function (req, res) { res.send("hello world"); });
-                    app.listen(3000, function () { return console.log('Server is up and running'); });
+                    /*app.use('/graphql',expressMiddleware(apolloServer,{
+                        context: async ({ req }) => ({ token: req.headers.token }),
+                      }) );
+                    
+                      */
+                    //app.use ((req: any, res:any) => { res.send("hello world")})
+                    return [4 /*yield*/, new Promise(function (resolve) { return httpServer.listen({ port: 4000 }, resolve); })];
+                case 2:
+                    /*app.use('/graphql',expressMiddleware(apolloServer,{
+                        context: async ({ req }) => ({ token: req.headers.token }),
+                      }) );
+                    
+                      */
+                    //app.use ((req: any, res:any) => { res.send("hello world")})
+                    _a.sent();
+                    console.log("\uD83D\uDE80 Server ready at http://localhost:4000/graphql");
                     return [2 /*return*/];
             }
         });

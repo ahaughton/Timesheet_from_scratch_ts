@@ -1,0 +1,59 @@
+// MongoDB Playground
+// To disable this template go to Settings | MongoDB | Use Default Template For Playground.
+// Make sure you are connected to enable completions and to be able to run a playground.
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+// Select the database to use.
+use('users_db');
+
+// The drop() command destroys all data from a collection.
+// Make sure you run it against the correct database and collection.
+//db.tasks.find()
+
+// db.tasks.find({
+//   projectname: "Project 3",
+//   activities: {$elemMatch: {user_name:"mark Drisdale"}}
+// });
+
+// db.tasks.find({
+//  // {
+//   projectname: "Project 3",
+//   activities.username: "mark Drisdale"
+//  // }
+// });
+
+ db.tasks.aggregate([//{
+//   $match :{
+//     "activities" : {
+//       "$elemMatch": {"user_name":"mark Drisdale"}
+//     },
+//   }
+// },
+{
+$project:{ "_id": 0,"projectname":1, "projectowner":1, 
+      activities : {$filter:{
+                              input: "$activities",
+                              as: "acti",
+                              cond: {$and:[{$eq:["$$acti.user_name", "mustist@yahoo.com"]},
+                                           {$ne:["acti", []]}
+                                          ]
+                                    }
+                            }
+                        
+
+                     }
+
+            }
+}            
+ //,{$match: {"activities" : {$not:{$size:0}}} }
+ ,{$match: {"activities" : {$ne:[]}}}
+ ])
+
+
+// // Query returs the values but repeats the document header. 
+// db.tasks.aggregate([
+//  {'$unwind': '$activities'},
+//  {'$match' :{'activities.user_name' :'ahaughton'}},
+// ])
+
+//db.tasks.find({"$activites.user_name" : "mark Drisdale"})

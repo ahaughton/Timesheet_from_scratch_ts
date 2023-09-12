@@ -25,7 +25,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -82,6 +82,32 @@ exports.resolvers = {
                 }
             }); });
         },
+        GetTaskbyUser: function (_, _a, _b) {
+            var user = _b.user;
+            return __awaiter(void 0, void 0, void 0, function () {
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
+                        case 0: return [4 /*yield*/, task.aggregate([
+                                {
+                                    $project: { "_id": 0, "projectname": 1, "projectowner": 1,
+                                        activities: { $filter: {
+                                                input: "$activities",
+                                                as: "acti",
+                                                cond: { $and: [{ $eq: ["$$acti.user_name", user.email] },
+                                                        { $ne: ["acti", []] }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                { $match: { "activities": { $ne: [] } } }
+                            ])];
+                        case 1: return [2 /*return*/, _c.sent()];
+                    }
+                });
+            });
+        }
     },
     Mutation: {
         createTaskGQ: function (_root, _a) {
@@ -91,10 +117,7 @@ exports.resolvers = {
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0:
-                            newtask = new task({ projectname: projectname,
-                                projectowner: projectowner,
-                                projectdescription: projectdescription,
-                                input: input });
+                            newtask = new task({ projectname: projectname, projectowner: projectowner, projectdescription: projectdescription, input: input });
                             return [4 /*yield*/, newtask.save()];
                         case 1:
                             _b.sent();
@@ -142,20 +165,21 @@ exports.resolvers = {
                 });
             });
         },
-        addActivitiesGQ: function (_, _a) {
+        addActivitiesGQ: function (_, _a, _b) {
             var projectid = _a.projectid, input = _a.input;
+            var user = _b.user;
             return __awaiter(void 0, void 0, void 0, function () {
                 var newtask, err_2;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
                         case 0:
-                            _b.trys.push([0, 3, , 4]);
+                            _c.trys.push([0, 3, , 4]);
                             return [4 /*yield*/, task.findById(projectid)];
                         case 1:
-                            newtask = _b.sent();
+                            newtask = _c.sent();
                             newtask.activities.push({
                                 jobdescription: input.jobdescription,
-                                user_name: input.user_name,
+                                user_name: user.email,
                                 jobcategory: input.jobcategory,
                                 timestart: input.timestart,
                                 timestop: input.timestop,
@@ -163,10 +187,10 @@ exports.resolvers = {
                             });
                             return [4 /*yield*/, newtask.save()];
                         case 2:
-                            _b.sent();
+                            _c.sent();
                             return [3 /*break*/, 4];
                         case 3:
-                            err_2 = _b.sent();
+                            err_2 = _c.sent();
                             console.log(err_2);
                             return [3 /*break*/, 4];
                         case 4:
@@ -226,34 +250,35 @@ exports.resolvers = {
                 });
             });
         },
-        updateAcitivityGQ: function (_, _a) {
+        updateAcitivityGQ: function (_, _a, _b) {
             var taskid = _a.taskid, activityid = _a.activityid, input = _a.input;
+            var user = _b.user;
             return __awaiter(void 0, void 0, void 0, function () {
                 var mytask, updated, err_5;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
                         case 0:
                             //https://attacomsian.com/blog/mongoose-subdocuments
                             console.log(activityid);
                             console.log(taskid);
-                            _b.label = 1;
+                            _c.label = 1;
                         case 1:
-                            _b.trys.push([1, 4, , 5]);
+                            _c.trys.push([1, 4, , 5]);
                             return [4 /*yield*/, task.findById(taskid)];
                         case 2:
-                            mytask = _b.sent();
+                            mytask = _c.sent();
                             mytask.activities.id(activityid).jobdescription = input.jobdescription;
-                            mytask.activities.id(activityid).username = input.username;
+                            mytask.activities.id(activityid).username = user.email;
                             mytask.activities.id(activityid).jobcategory = input.jobcategory;
                             mytask.activities.id(activityid).timestart = input.timestart;
                             mytask.activities.id(activityid).timestop = input.timestop;
                             mytask.activities.id(activityid).comments = input.comments;
                             return [4 /*yield*/, mytask.save()];
                         case 3:
-                            updated = _b.sent();
+                            updated = _c.sent();
                             return [3 /*break*/, 5];
                         case 4:
-                            err_5 = _b.sent();
+                            err_5 = _c.sent();
                             console.log(err_5);
                             return [3 /*break*/, 5];
                         case 5: return [2 /*return*/];
@@ -295,6 +320,7 @@ exports.resolvers = {
         //         };
         //     },
         // },
+        //https://www.youtube.com/watch?v=htB2uJCf4ws&t=340s     
         Registeruser: function (_, _a) {
             var input = _a.input;
             return __awaiter(void 0, void 0, void 0, function () {
@@ -303,14 +329,14 @@ exports.resolvers = {
                     switch (_b.label) {
                         case 0:
                             _b.trys.push([0, 4, , 5]);
-                            return [4 /*yield*/, User.findOne({ username: input.username })
+                            return [4 /*yield*/, User.findOne({ email: input.email })
                                 // Throw error if error does not exist
                             ];
                         case 1:
                             olduser = _b.sent();
                             // Throw error if error does not exist
                             if (olduser) {
-                                throw new apollo_server_express_1.ApolloError('This username already exist ' + input.username, 'USER_ALREADY_EXIST');
+                                throw new apollo_server_express_1.ApolloError('This email already exist ' + input.email, 'USER_ALREADY_EXIST');
                             }
                             console.log("user not in database", input.password);
                             return [4 /*yield*/, bcript.hash(input.password, 10)];
@@ -320,10 +346,10 @@ exports.resolvers = {
                             newuser = new User({
                                 firstname: input.firstname,
                                 lastname: input.lastname,
-                                username: input.username,
+                                email: input.email,
                                 password: encriptedpassword
                             });
-                            token = jwt.sign({ user_id: newuser._id, email: newuser.username }, "MOVE_ME_TO_ENV", {
+                            token = jwt.sign({ user_id: newuser._id, email: newuser.email }, "MOVE_ME_TO_ENV", {
                                 expiresIn: "2h"
                             });
                             newuser.token = token;
@@ -331,12 +357,66 @@ exports.resolvers = {
                             return [4 /*yield*/, newuser.save()];
                         case 3:
                             doc = _b.sent();
-                            return [2 /*return*/, __assign({ id: doc.id }, doc.doc)];
+                            return [2 /*return*/, __assign({ id: doc.id }, doc._doc)];
                         case 4:
                             err_7 = _b.sent();
                             console.log(err_7);
                             return [3 /*break*/, 5];
                         case 5: return [2 /*return*/];
+                    }
+                });
+            });
+        },
+        Loginuser: function (_, _a, ctx) {
+            var email = _a.email, password = _a.password;
+            return __awaiter(this, void 0, void 0, function () {
+                var Loginuser, _b, token, err_8;
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
+                        case 0:
+                            // Check if user exist 
+                            console.log("this is the context" + ctx + email);
+                            _c.label = 1;
+                        case 1:
+                            _c.trys.push([1, 5, , 6]);
+                            return [4 /*yield*/, User.findOne({ email: email })
+                                // Throw error if error does not exist
+                            ];
+                        case 2:
+                            Loginuser = _c.sent();
+                            _b = Loginuser;
+                            if (!_b) return [3 /*break*/, 4];
+                            return [4 /*yield*/, bcript.compare(password, Loginuser.password)];
+                        case 3:
+                            _b = (_c.sent());
+                            _c.label = 4;
+                        case 4:
+                            // Throw error if error does not exist
+                            if (_b) {
+                                token = jwt.sign({ user_id: Loginuser._id,
+                                    email: Loginuser.email,
+                                    roles: Loginuser.roles,
+                                    permissions: Loginuser.permissions }, process.env.JWT_SECRET, {
+                                    expiresIn: "2h"
+                                });
+                                console.log("token form loginuser => ".concat(token));
+                                Loginuser.token = token;
+                                console.log(Loginuser);
+                                ctx.Loginuser = Loginuser;
+                                console.log("--------------------");
+                                console.log(ctx);
+                                console.log("--------------------");
+                                return [2 /*return*/, __assign({ _id: Loginuser._id }, Loginuser._doc)];
+                            }
+                            else {
+                                throw new apollo_server_express_1.ApolloError('Incorect password', 'Incorrect_Password');
+                            }
+                            return [3 /*break*/, 6];
+                        case 5:
+                            err_8 = _c.sent();
+                            console.log(err_8);
+                            return [3 /*break*/, 6];
+                        case 6: return [2 /*return*/];
                     }
                 });
             });

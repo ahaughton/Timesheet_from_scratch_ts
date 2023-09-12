@@ -1,16 +1,18 @@
 import {gql} from 'apollo-server-express';
-
+//https://www.youtube.com/watch?v=htB2uJCf4ws&t=340s
 export const usertypedefs = gql`
 type Query{
     Userbyemail(email:String): User
+  # Loginuser (email:string,password:string) User
 }
 type Mutation {
     Registeruser(input: userInputGQ): User
+    Loginuser (email:String,password:String): User
 }
 
 type User{
     _id:ID
-    username:String 
+    email:String 
     firstname: String
     lastname: String
     password:String
@@ -24,9 +26,10 @@ input userInputGQ
 {
   firstname:String
   lastname:String
-  username:String
+  email:String
   password:String
   token:String
+  active: Boolean
   roles:[String]
   permission:[String]
 }
